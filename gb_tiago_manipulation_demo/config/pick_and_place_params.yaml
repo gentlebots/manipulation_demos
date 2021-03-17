@@ -11,7 +11,7 @@ grasp_pose_frame_id: base_footprint
 # Frame where the direction of the poses will be computed
 grasp_postures_frame_id: arm_tool_link
 # Currently unused grasp quality to put in the message
-grasp_quality: 0.1
+grasp_quality: 1.0
 # Gripper joint poses
 gripper_joint_names: "gripper_left_finger_joint gripper_right_finger_joint"
 # Closed position
@@ -47,7 +47,7 @@ min_degrees_pitch: 0
 max_degrees_pitch: 360
 
 # The steps are the main thing to tune
-step_degrees_pitch: 10
+step_degrees_pitch: 15
 step_degrees_yaw: 10
 
 links_to_allow_contact: ["gripper_left_finger_link", "gripper_right_finger_link", "gripper_link"]

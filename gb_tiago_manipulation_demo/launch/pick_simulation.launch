@@ -2,14 +2,12 @@
 <launch>
   <arg name="world_name" default="$(find tiago_sim_robocup2021)/worlds/wrs2020_manipulation_demo.world" />
   <arg name="robot_pos" default="-x -2.1 -y -0.6 -z 0 -Y 3.14" />
-  <arg name="spawn_objects" default="false" />
-
+  <param name="trajectory_execution/allowed_start_tolerance" value="0.0"/>
   <!-- Gazebo simulation -->
   <include file="$(find tiago_sim_robocup2021)/launch/tiago_sim_robocup2021.launch">
-    <arg name="world_name"      value="$(arg world_name)"/>
-    <arg name="robot_pos"       value="$(arg robot_pos)"/>
-    <arg name="spawn_objects"   value="$(arg spawn_objects)"/>
+    <arg name="world_name"          value="$(arg world_name)"/>
+    <arg name="robot_pos"           value="$(arg robot_pos)"/>
+    <arg name="spawn_objects"       value="false"/>
+    <arg name="use_moveit_camera"   value="true"/>
   </include>
-
-
 </launch>
