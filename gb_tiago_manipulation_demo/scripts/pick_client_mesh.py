@@ -109,7 +109,7 @@ class PickObject(object):
 		#object_pose = rospy.wait_for_message('/object_single/pose', PoseStamped)
 		object_pose = PoseStamped()
 		object_pose.pose.position.x = 0.62
-		object_pose.pose.position.y = -0.12
+		object_pose.pose.position.y = -0.13
 		object_pose.pose.position.z = 0.43
 		#object_pose.pose.orientation.y = 0.707
 		#object_pose.pose.orientation.w = 0.707

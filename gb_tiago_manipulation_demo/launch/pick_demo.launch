@@ -33,6 +33,6 @@
       <node name="pick_demo_rviz" pkg="rviz" type="rviz" args="-d $(find gb_tiago_manipulation_demo)/config/rviz/tiago_pick_demo.rviz" />
   </group>
 
-  <node pkg="topic_tools" type="throttle" name="throttle_node" args="messages /xtion/depth_registered/points 1 /throttle_filtering_points/filtered_points" />
+  <node pkg="topic_tools" type="throttle" name="throttle_node" args="messages /xtion/depth_registered/points 3 /throttle_filtering_points/filtered_points" />
 
 </launch>
