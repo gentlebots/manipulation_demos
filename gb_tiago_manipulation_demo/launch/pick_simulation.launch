@@ -9,7 +9,7 @@
     <arg name="spawn_objects"       value="false"/>
     <arg name="use_moveit_camera"   value="true"/>
   </include>
-
+  <!-- Allowed joint-value tolerance for validation that trajectory's first point matches current robot state -->
   <param name="/move_group/trajectory_execution/allowed_start_tolerance" value="0.0"/>
   <param name="/move_group/octomap_resolution" value="0.025"/>
 </launch>
