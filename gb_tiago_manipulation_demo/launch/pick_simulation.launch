@@ -2,7 +2,7 @@
 <launch>
   <arg name="world_name" default="$(find tiago_sim_robocup2021)/worlds/wrs2020_manipulation_demo.world" />
   <arg name="robot_pos" default="-x -2.1 -y -0.6 -z 0 -Y 3.14" />
-  <param name="trajectory_execution/allowed_start_tolerance" value="0.0"/>
+  <param name="/move_group/trajectory_execution/allowed_start_tolerance" value="0.0"/>
   <!-- Gazebo simulation -->
   <include file="$(find tiago_sim_robocup2021)/launch/tiago_sim_robocup2021.launch">
     <arg name="world_name"          value="$(arg world_name)"/>
