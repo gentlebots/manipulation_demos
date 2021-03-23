@@ -19,6 +19,8 @@
 #   * Sam Pfeiffer
 #   * Job van Dieten
 #   * Jordi Pages
+#		
+#		* Jonatan Gines
 
 import rospy
 import time
@@ -38,7 +40,7 @@ from std_srvs.srv import Empty
 import cv2
 from cv_bridge import CvBridge
 
-from moveit_msgs.msg import MoveItErrorCodes
+from moveit_msgs.msg import MoveItErrorCodes, Grasp, PlaceLocation
 moveit_error_dict = {}
 for name in MoveItErrorCodes.__dict__.keys():
 	if not name[:1] == '_':
@@ -50,26 +52,30 @@ class SphericalService(object):
 		rospy.loginfo("Starting Spherical Grab Service")
 		self.pick_type = PickObject()
 		rospy.loginfo("Finished SphericalService constructor")
-                self.place_gui = rospy.Service("/place_gui", Empty, self.start_object_place)
-                self.pick_gui = rospy.Service("/pick_gui", Empty, self.start_object_pick)
-
-	def start_object_pick(self, req):
-		self.pick_type.pick("pick")
-		return {}
+		self.place_gui = rospy.Service("/place_gui", Empty, self.start_object_place)
+		self.pick_sub = rospy.Subscriber("/moveit/pick", Grasp, self.pick_cb)
+		self.place_sub = rospy.Subscriber("/moveit/place", PlaceLocation, self.place_cb)
 
 	def start_object_place(self, req):
 		self.pick_type.pick("place")
+		return {}
+	
+	def pick_cb(self, msg):
+		self.pick_type.pick(msg.id, msg.grasp_pose)
+		return {}
+	
+	def place_cb(self, msg):
+		self.pick_type.place(msg.id, msg.place_pose)
 		return {}
 
 class PickObject(object):
 	def __init__(self):
 		rospy.loginfo("Initalizing...")
 		self.tfBuffer = tf2_ros.Buffer()
-                self.tf_l = tf2_ros.TransformListener(self.tfBuffer)
-                
+		self.tf_l = tf2_ros.TransformListener(self.tfBuffer)
 		rospy.loginfo("Waiting for /pickup_pose AS...")
 		self.pick_as = SimpleActionClient('/pickup_pose', PickUpPoseAction)
-                time.sleep(1.0)
+		time.sleep(0.5)
 		if not self.pick_as.wait_for_server(rospy.Duration(20)):
 			rospy.logerr("Could not connect to /pickup_pose AS")
 			exit()
@@ -84,9 +90,10 @@ class PickObject(object):
 		self.head_cmd = rospy.Publisher(
 			'/head_controller/command', JointTrajectory, queue_size=1)
 		self.detected_pose_pub = rospy.Publisher('/detected_object_pose',
-							 PoseStamped,
-							 queue_size=1,
-							 latch=True)
+			PoseStamped,
+			queue_size=1,
+			latch=True)
+		self.result_pub = rospy.Publisher('/moveit/result', MoveItErrorCodes, queue_size=1)
 
 		rospy.loginfo("Waiting for '/play_motion' AS...")
 		self.play_m_as = SimpleActionClient('/play_motion', PlayMotionAction)
@@ -94,34 +101,20 @@ class PickObject(object):
 			rospy.logerr("Could not connect to /play_motion AS")
 			exit()
 		rospy.loginfo("Connected!")
-		rospy.sleep(1.0)
+		rospy.sleep(0.5)
 		rospy.loginfo("Done initializing Pickobject.")
 
    	def strip_leading_slash(self, s):
 		return s[1:] if s.startswith("/") else s
-		
-	def pick(self, string_operation):
+
+	def pick(self, object_id, object_pose):
 		self.prepare_robot()
-		rospy.wait_for_message("joint_states", JointState)
-		rospy.sleep(3.0)
-		#rospy.loginfo("spherical_grasp_gui: Waiting for an object detection")
-
-		#object_pose = rospy.wait_for_message('/object_single/pose', PoseStamped)
-		object_pose = PoseStamped()
-		object_pose.pose.position.x = 0.62
-		object_pose.pose.position.y = -0.13
-		object_pose.pose.position.z = 0.43
-		#object_pose.pose.orientation.y = 0.707
-		#object_pose.pose.orientation.w = 0.707
-		object_pose.pose.orientation.w = 1.0
-		object_pose.header.frame_id = "base_footprint"
-		object_pose.header.stamp = self.tfBuffer.get_latest_common_time("base_footprint", object_pose.header.frame_id)
 		rospy.loginfo("Got: " + str(object_pose))
-
+		rospy.sleep(1.5)
 		rospy.loginfo("spherical_grasp_gui: Transforming from frame: " +
 		object_pose.header.frame_id + " to 'base_footprint'")
 		ps = PoseStamped()
-		ps.pose.position = object_pose.pose.position
+		ps.pose = object_pose.pose
 		ps.header.stamp = self.tfBuffer.get_latest_common_time("base_footprint", object_pose.header.frame_id)
 		ps.header.frame_id = object_pose.header.frame_id
 		transform_ok = False
@@ -139,46 +132,85 @@ class PickObject(object):
 				rospy.sleep(0.01)
 				ps.header.stamp = self.tfBuffer.get_latest_common_time("base_footprint", object_pose.header.frame_id)
 			pick_g = PickUpPoseGoal()
-
-		if string_operation == "pick":
-
-                        rospy.loginfo("Setting cube pose based on object detection")
+			rospy.loginfo("Setting cube pose based on object detection")
 			pick_g.object_pose.pose = object_ps.pose
-			pick_g.object_pose.pose.orientation.w = 0.707
-			pick_g.object_pose.pose.orientation.x = 0.0
-			pick_g.object_pose.pose.orientation.y = 0.0
-			pick_g.object_pose.pose.orientation.z = 0.707
 			pick_g.object_pose.header.frame_id = object_pose.header.frame_id
-                        rospy.loginfo("object pose in base_footprint:" + str(pick_g))
-
+			pick_g.object_id = object_id
+			rospy.loginfo("object pose in base_footprint:" + str(pick_g))
+			
 			self.detected_pose_pub.publish(pick_g.object_pose)
 			rospy.loginfo("Gonna pick:" + str(pick_g))
 			self.pick_as.send_goal_and_wait(pick_g)
 			rospy.loginfo("Done!")
 
 			result = self.pick_as.get_result()
+			
+			if str(moveit_error_dict[result.error_code]) != "SUCCESS":
+				rospy.logerr("Failed to pick, not trying further")
+
+			# Move torso to its maximum height
+			self.lift_torso()
+			# Raise arm
+
+			rospy.loginfo("Moving arm to a safe pose")
+			self.arm_to_home()
+			rospy.loginfo("Raise object done.")
+			result_msg = MoveItErrorCodes()
+			result_msg.val = result.error_code
+			self.result_pub.publish(result_msg)
+
+	def place(self, place_id, pose):
+		self.lift_torso()
+		self.lower_head()
+		rospy.loginfo("Got: " + str(pose))
+		rospy.sleep(1.5)
+		rospy.loginfo("Transforming from frame: " + pose.header.frame_id + " to 'base_footprint'")
+		ps = PoseStamped()
+		ps.pose = pose.pose
+		ps.header.stamp = self.tfBuffer.get_latest_common_time("base_footprint", pose.header.frame_id)
+		ps.header.frame_id = pose.header.frame_id
+		transform_ok = False
+		while not transform_ok and not rospy.is_shutdown():
+			try:
+				transform = self.tfBuffer.lookup_transform("base_footprint", 
+									   ps.header.frame_id,
+									   rospy.Time(0))
+				object_ps = do_transform_pose(ps, transform)
+				transform_ok = True
+			except tf2_ros.ExtrapolationException as e:
+				rospy.logwarn(
+					"Exception on transforming point... trying again \n(" +
+					str(e) + ")")
+				rospy.sleep(0.01)
+				ps.header.stamp = self.tfBuffer.get_latest_common_time("base_footprint", pose.header.frame_id)
+			place_g = PickUpPoseGoal()
+			#rospy.loginfo("Setting cube pose based on object detection")
+			place_g.object_pose.pose = object_ps.pose
+			place_g.object_pose.header.frame_id = "base_footprint"
+			rospy.loginfo("Place pose in base_footprint:" + str(place_g))
+			#self.detected_pose_pub.publish(object_ps.pose)
+
+			# Place the object back to its position
+			place_g.object_pose.pose.position.z += 0.05
+			self.place_as.send_goal_and_wait(place_g)
+			rospy.loginfo("Done!")
+			result = self.pick_as.get_result()
 			if str(moveit_error_dict[result.error_code]) != "SUCCESS":
 				rospy.logerr("Failed to pick, not trying further")
 				return
 
-			# Move torso to its maximum height
-                        self.lift_torso()
-
-                        # Raise arm
-			rospy.loginfo("Moving arm to a safe pose")
-			pmg = PlayMotionGoal()
-                        pmg.motion_name = 'pick_final_pose'
-			pmg.skip_planning = False
-			self.play_m_as.send_goal_and_wait(pmg)
-			rospy.loginfo("Raise object done.")
-
-                        # Place the object back to its position
-			rospy.loginfo("Gonna place near where it was")
-			pick_g.object_pose.pose.position.z += 0.05
-			self.place_as.send_goal_and_wait(pick_g)
-			rospy.loginfo("Done!")
-
-        def lift_torso(self):
+			self.arm_to_home()
+			result_msg = MoveItErrorCodes()
+			result_msg.val = result.error_code
+			self.result_pub.publish(result_msg)
+	
+	def arm_to_home(self):
+		pmg = PlayMotionGoal()
+		pmg.motion_name = 'home'
+		pmg.skip_planning = False
+		self.play_m_as.send_goal_and_wait(pmg)
+	
+	def lift_torso(self):
 		rospy.loginfo("Moving torso up")
 		jt = JointTrajectory()
 		jt.joint_names = ['torso_lift_joint']
@@ -187,8 +219,8 @@ class PickObject(object):
 		jtp.time_from_start = rospy.Duration(2.5)
 		jt.points.append(jtp)
 		self.torso_cmd.publish(jt)
-
-        def lower_head(self):
+	
+	def lower_head(self):
 		rospy.loginfo("Moving head down")
 		jt = JointTrajectory()
 		jt.joint_names = ['head_1_joint', 'head_2_joint']
@@ -197,7 +229,7 @@ class PickObject(object):
 		jtp.time_from_start = rospy.Duration(2.0)
 		jt.points.append(jtp)
 		self.head_cmd.publish(jt)
-                rospy.loginfo("Done.")
+		rospy.loginfo("Done.")
 
 	def prepare_robot(self):
 		rospy.loginfo("Unfold arm safely")
@@ -206,11 +238,8 @@ class PickObject(object):
 		pmg.skip_planning = False
 		self.play_m_as.send_goal_and_wait(pmg)
 		rospy.loginfo("Done.")
-
-                self.lower_head()
-
+		self.lower_head()
 		rospy.loginfo("Robot prepared.")
-
 
 if __name__ == '__main__':
 	rospy.init_node('pick_demo')

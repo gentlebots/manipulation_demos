@@ -52,7 +52,7 @@ def createPickupGoal(group="arm_torso", target="part",
 	pug.target_name = target
 	pug.group_name = group
 	pug.possible_grasps.extend(possible_grasps)
-	pug.allowed_planning_time = 35.0
+	pug.allowed_planning_time = 10.0
 	pug.planning_options.planning_scene_diff.is_diff = True
 	pug.planning_options.planning_scene_diff.robot_state.is_diff = True
 	pug.planning_options.plan_only = False
@@ -75,12 +75,12 @@ def createPlaceGoal(place_pose,
 	placeg.group_name = group
 	placeg.attached_object_name = target
 	placeg.place_locations = place_locations
-	placeg.allowed_planning_time = 15.0
+	placeg.allowed_planning_time = 10.0
 	placeg.planning_options.planning_scene_diff.is_diff = True
 	placeg.planning_options.planning_scene_diff.robot_state.is_diff = True
 	placeg.planning_options.plan_only = False
 	placeg.planning_options.replan = True
-	placeg.planning_options.replan_attempts = 1
+	placeg.planning_options.replan_attempts = 5
 	placeg.allowed_touch_objects = ['<octomap>']
 	placeg.allowed_touch_objects.extend(links_to_allow_contact)
 
@@ -137,7 +137,7 @@ class PickAndPlaceServer(object):
 		"""
 		:type goal: PickUpPoseGoal
 		"""
-		error_code = self.grasp_object(goal.object_pose)
+		error_code = self.grasp_object(goal.object_pose, goal.object_id)
 		p_res = PickUpPoseResult()
 		p_res.error_code = error_code
 		if error_code != 1:
@@ -177,7 +177,7 @@ class PickAndPlaceServer(object):
 
 		rospy.loginfo("'" + object_name + "'' is in scene!")
 
-	def grasp_object(self, object_pose):
+	def grasp_object(self, object_pose, object_id):
 		rospy.loginfo("Removing any previous 'part' object")
 		self.scene.remove_attached_object("arm_tool_link")
 		self.scene.remove_world_object("part")
@@ -187,10 +187,11 @@ class PickAndPlaceServer(object):
 
 		rospy.loginfo("Adding new 'part' object")
 		rospy.loginfo("Object pose: %s", object_pose.pose)
-    #Add object description in scene
-		#self.scene.add_box("part", object_pose, (self.object_depth, self.object_width, self.object_height))
-		#Add object description in scene
+		
+		# Get the object dae path and size from a yaml.
+		# path = self.get_path(object_id)
 		path = roslib.packages.get_pkg_dir('tiago_sim_robocup2021')+'/models/ycb_004_sugar_box/meshes/textured.dae'
+		
 		self.scene.add_mesh("part", object_pose, path,
 			(self.object_depth*10, self.object_width*10, self.object_height*10))
 		rospy.loginfo("Second%s", object_pose.pose)
@@ -219,35 +220,19 @@ class PickAndPlaceServer(object):
 	def place_object(self, object_pose):
 		rospy.loginfo("Clearing octomap")
 		self.clear_octomap_srv.call(EmptyRequest())
-		possible_placings = self.sg.create_placings_from_object_pose(
-			object_pose)
-		# Try only with arm
-		rospy.loginfo("Trying to place using only arm")
+		rospy.loginfo("Trying to place with arm and torso")
+		
+		# Try with arm and torso
 		goal = createPlaceGoal(
-			object_pose, possible_placings, "arm", "part", self.links_to_allow_contact)
+				object_pose, possible_placings, "arm_torso", "part", self.links_to_allow_contact)
 		rospy.loginfo("Sending goal")
 		self.place_ac.send_goal(goal)
 		rospy.loginfo("Waiting for result")
 
 		self.place_ac.wait_for_result()
 		result = self.place_ac.get_result()
-		rospy.loginfo(str(moveit_error_dict[result.error_code.val]))
+		rospy.logerr(str(moveit_error_dict[result.error_code.val]))
 
-		if str(moveit_error_dict[result.error_code.val]) != "SUCCESS":
-			rospy.loginfo(
-				"Trying to place with arm and torso")
-			# Try with arm and torso
-			goal = createPlaceGoal(
-				object_pose, possible_placings, "arm_torso", "part", self.links_to_allow_contact)
-			rospy.loginfo("Sending goal")
-			self.place_ac.send_goal(goal)
-			rospy.loginfo("Waiting for result")
-
-			self.place_ac.wait_for_result()
-			result = self.place_ac.get_result()
-			rospy.logerr(str(moveit_error_dict[result.error_code.val]))
-		
-                # print result
 		rospy.loginfo(
 			"Result: " +
 			str(moveit_error_dict[result.error_code.val]))

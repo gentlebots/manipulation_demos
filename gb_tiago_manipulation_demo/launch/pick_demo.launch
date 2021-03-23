@@ -1,20 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-
+  <include file="$(find gb_tiago_manipulation_demo)/launch/pick_simulation.launch"/>
   <arg name="rviz"  default="true"/>
-  <!-- marker detector -->
-  <!--<node pkg="aruco_ros" type="single"  name="aruco_single">
-      <remap from="/camera_info"       to="/xtion/rgb/camera_info" />
-      <remap from="/image"             to="/xtion/rgb/image_rect_color" />
-      <param name="image_is_rectified" value="True"/>
-      <param name="marker_size"        value="0.045"/>
-      <param name="marker_id"          value="582"/>
-      <param name="reference_frame"    value="/base_footprint"/>
-      <param name="camera_frame"       value="xtion_rgb_optical_frame"/>
-      <param name="marker_frame"       value="aruco_frame" />
-      <param name="corner_refinement"  value="SUBPIX" />
-  </node>-->
-
+  
   <!-- Load definition of pregrasp motion into play_motion namespace -->
   <rosparam command="load" file="$(find gb_tiago_manipulation_demo)/config/pick_motions.yaml" /> 
   <param name="/use_sim_time" value="true" />

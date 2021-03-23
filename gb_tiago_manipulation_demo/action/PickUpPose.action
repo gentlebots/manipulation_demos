@@ -1,4 +1,5 @@
 geometry_msgs/PoseStamped object_pose
+string object_id
 ---
 #result definition
 # Comes from moveit_msgs/MoveItErrorCodes
