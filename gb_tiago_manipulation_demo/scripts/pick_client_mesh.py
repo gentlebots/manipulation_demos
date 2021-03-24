@@ -110,7 +110,7 @@ class PickObject(object):
 	def pick(self, object_id, object_pose):
 		self.prepare_robot()
 		rospy.loginfo("Got: " + str(object_pose))
-		rospy.sleep(1.5)
+		rospy.sleep(3.0)
 		rospy.loginfo("spherical_grasp_gui: Transforming from frame: " +
 		object_pose.header.frame_id + " to 'base_footprint'")
 		ps = PoseStamped()
@@ -163,7 +163,7 @@ class PickObject(object):
 		self.lift_torso()
 		self.lower_head()
 		rospy.loginfo("Got: " + str(pose))
-		rospy.sleep(1.5)
+		rospy.sleep(3.0)
 		rospy.loginfo("Transforming from frame: " + pose.header.frame_id + " to 'base_footprint'")
 		ps = PoseStamped()
 		ps.pose = pose.pose
@@ -232,11 +232,11 @@ class PickObject(object):
 		rospy.loginfo("Done.")
 
 	def prepare_robot(self):
-		rospy.loginfo("Unfold arm safely")
-		pmg = PlayMotionGoal()
-		pmg.motion_name = 'pregrasp'
-		pmg.skip_planning = False
-		self.play_m_as.send_goal_and_wait(pmg)
+		#rospy.loginfo("Unfold arm safely")
+		#pmg = PlayMotionGoal()
+		#pmg.motion_name = 'pregrasp'
+		#pmg.skip_planning = False
+		#self.play_m_as.send_goal_and_wait(pmg)
 		rospy.loginfo("Done.")
 		self.lower_head()
 		rospy.loginfo("Robot prepared.")

@@ -109,13 +109,7 @@ class PickAndPlaceServer(object):
 		self.clear_octomap_srv = rospy.ServiceProxy(
 			'/clear_octomap', Empty)
 		self.clear_octomap_srv.wait_for_service()
-		rospy.loginfo("Connected!")
-
-                # Get the object size
-                self.object_height = rospy.get_param('~object_height')
-                self.object_width = rospy.get_param('~object_width')
-                self.object_depth = rospy.get_param('~object_depth')
-
+		rospy.loginfo("Connected!")  
 		# Get the links of the end effector exclude from collisions
 		self.links_to_allow_contact = rospy.get_param('~links_to_allow_contact', None)
 		if self.links_to_allow_contact is None:
@@ -192,8 +186,7 @@ class PickAndPlaceServer(object):
 		# path = self.get_path(object_id)
 		path = roslib.packages.get_pkg_dir('tiago_sim_robocup2021')+'/models/ycb_004_sugar_box/meshes/textured.dae'
 		
-		self.scene.add_mesh("part", object_pose, path,
-			(self.object_depth*10, self.object_width*10, self.object_height*10))
+		self.scene.add_mesh("part", object_pose, path)
 		rospy.loginfo("Second%s", object_pose.pose)
 
 		grasp_pose = copy.deepcopy(object_pose)
@@ -221,7 +214,8 @@ class PickAndPlaceServer(object):
 		rospy.loginfo("Clearing octomap")
 		self.clear_octomap_srv.call(EmptyRequest())
 		rospy.loginfo("Trying to place with arm and torso")
-		
+		possible_placings = self.sg.create_placings_from_object_pose(
+			object_pose)
 		# Try with arm and torso
 		goal = createPlaceGoal(
 				object_pose, possible_placings, "arm_torso", "part", self.links_to_allow_contact)

@@ -32,14 +32,17 @@ from copy import deepcopy
 import actionlib
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from std_msgs.msg import ColorRGBA, Header
-from geometry_msgs.msg import Pose, PoseStamped, PoseArray, Vector3Stamped, Vector3, Quaternion, Point
+from geometry_msgs.msg import Pose, PoseStamped, PoseArray, Vector3Stamped,\
+    Vector3, Quaternion, Point
 from trajectory_msgs.msg import JointTrajectoryPoint, JointTrajectory
-from moveit_msgs.msg import Grasp, GripperTranslation
-from moveit_msgs.msg import PlaceAction, PlaceGoal, PlaceResult, PlaceLocation
+from moveit_msgs.msg import Grasp, GripperTranslation, PlaceAction, PlaceGoal,\
+    PlaceResult, PlaceLocation
 from visualization_msgs.msg import MarkerArray, Marker
 
 from tf import transformations
-from tf.transformations import quaternion_from_euler, euler_from_quaternion, quaternion_about_axis, unit_vector, quaternion_multiply
+from tf.transformations import quaternion_from_euler, euler_from_quaternion,\
+    quaternion_about_axis,unit_vector, quaternion_multiply, quaternion_matrix,\
+    translation_matrix, translation_from_matrix, quaternion_from_matrix
 
 from dynamic_reconfigure.server import Server
 from gb_tiago_manipulation_demo.cfg import SphericalGraspConfig
@@ -180,9 +183,13 @@ class SphericalGrasps(object):
         ori_z = 0.0
         sphere_poses = []
         rotated_q = quaternion_from_euler(0.0, 0.0, math.radians(180))
-        object_q = [object_pose.pose.orientation.x, object_pose.pose.orientation.y,
+        
+        norm_q = quaternion_from_euler(0.0, 0.0, math.radians(90))
+        q = [object_pose.pose.orientation.x, object_pose.pose.orientation.y,
             object_pose.pose.orientation.z, object_pose.pose.orientation.w]
-        object_roll, object_pitch, object_yaw = euler_from_quaternion(object_q)
+        q = quaternion_multiply(q, norm_q)
+        object_pose.pose.orientation = Quaternion(*q)
+
         yaw_qtty = int((self._max_degrees_yaw - self._min_degrees_yaw) / self._step_degrees_yaw)  # NOQA
         pitch_qtty = int((self._max_degrees_pitch - self._min_degrees_pitch) / self._step_degrees_pitch)  # NOQA
         info_str = "Creating poses with parameters:\n" + \
@@ -207,6 +214,21 @@ class SphericalGrasps(object):
                 x = ori_x + radius * math.cos(azimuth) * math.cos(altitude)
                 y = ori_y + radius * math.sin(altitude)
                 z = ori_z + radius * math.sin(azimuth) * math.cos(altitude)
+                trans1_mat = translation_matrix((0.0, 0.0, 0.0))
+                rot1_mat = quaternion_matrix((object_pose.pose.orientation.x,
+                                    object_pose.pose.orientation.y,
+                                    object_pose.pose.orientation.z,
+                                    object_pose.pose.orientation.w))
+                mat1 = np.dot(trans1_mat, rot1_mat)
+
+                trans2_mat = translation_matrix((x, y, z))
+                rot2_mat = quaternion_matrix((0.0, 0.0, 0.0, 1.0))
+                mat2 = np.dot(trans2_mat, rot2_mat)
+                mat3 = np.dot(mat1, mat2)
+                trans3 = translation_from_matrix(mat3)
+                x = trans3[0]
+                y = trans3[1]
+                z = trans3[2]
                 # this gets all the vectors pointing outside of the center
                 # quaternion as x y z w
                 q = quaternion_from_vectors([radius, 0.0, 0.0], [x, y, z])

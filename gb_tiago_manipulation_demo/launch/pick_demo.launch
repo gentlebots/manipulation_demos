@@ -9,9 +9,6 @@
   <!-- Pick & place server -->
   <node name="pick_and_place_server" pkg="gb_tiago_manipulation_demo" type="octomap_pick_and_place_server.py" output="screen">
       <rosparam command="load" file="$(find gb_tiago_manipulation_demo)/config/pick_and_place_params.yaml" />
-      <param name="object_width"  value="0.09"  />
-      <param name="object_height" value="0.09" />
-      <param name="object_depth"  value="0.115"  />
   </node>
 
   <!-- Node exposing service to start looking for the object and trigger the picking -->
@@ -21,6 +18,6 @@
       <node name="pick_demo_rviz" pkg="rviz" type="rviz" args="-d $(find gb_tiago_manipulation_demo)/config/rviz/tiago_pick_demo.rviz" />
   </group>
 
-  <node pkg="topic_tools" type="throttle" name="throttle_node" args="messages /xtion/depth_registered/points 3 /throttle_filtering_points/filtered_points" />
+  <node pkg="topic_tools" type="throttle" name="throttle_node" args="messages /xtion/depth_registered/points 2 /throttle_filtering_points/filtered_points" />
 
 </launch>
