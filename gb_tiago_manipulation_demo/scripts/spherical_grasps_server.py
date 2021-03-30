@@ -167,6 +167,8 @@ class SphericalGrasps(object):
 
         self._step_degrees_yaw = config["step_degrees_yaw"]
         self._step_degrees_pitch = config["step_degrees_pitch"]
+        print ("+_+++++++++++++++++++++++++++++")
+        print ("PARAM CHANGE")
         self._min_degrees_yaw = config["min_degrees_yaw"]
         self._max_degrees_yaw = config["max_degrees_yaw"]
         self._min_degrees_pitch = config["min_degrees_pitch"]
@@ -438,7 +440,7 @@ class SphericalGrasps(object):
         return g_trans
 
 if __name__ == '__main__':
-    rospy.init_node("spherical_grasps_server")
+    rospy.init_node("spherical_grasps_server", anonymous = False)
     sg = SphericalGrasps()
     # rospy.spin()
 

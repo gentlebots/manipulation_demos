@@ -68,6 +68,9 @@ class SphericalService(object):
 		self.pick_type.place(msg.id, msg.place_pose)
 		return {}
 
+	def step(self):
+		return {}
+
 class PickObject(object):
 	def __init__(self):
 		rospy.loginfo("Initalizing...")
@@ -75,10 +78,9 @@ class PickObject(object):
 		self.tf_l = tf2_ros.TransformListener(self.tfBuffer)
 		rospy.loginfo("Waiting for /pickup_pose AS...")
 		self.pick_as = SimpleActionClient('/pickup_pose', PickUpPoseAction)
-		time.sleep(0.5)
-		if not self.pick_as.wait_for_server(rospy.Duration(20)):
+		time.sleep(2.0)
+		if not self.pick_as.wait_for_server(rospy.Duration(15)):
 			rospy.logerr("Could not connect to /pickup_pose AS")
-			exit()
 		rospy.loginfo("Waiting for /place_pose AS...")
 		self.place_as = SimpleActionClient('/place_pose', PickUpPoseAction)
 
@@ -244,4 +246,7 @@ class PickObject(object):
 if __name__ == '__main__':
 	rospy.init_node('pick_demo')
 	sphere = SphericalService()
-	rospy.spin()
+	rate = rospy.Rate(10)
+	while not rospy.is_shutdown():
+		sphere.step()
+		rate.sleep()

@@ -34,6 +34,7 @@ from moveit_msgs.srv import GetPlanningScene, GetPlanningSceneRequest, GetPlanni
 from std_srvs.srv import Empty, EmptyRequest
 from copy import deepcopy
 from random import shuffle
+import dynamic_reconfigure.client
 import copy
 
 moveit_error_dict = {}
@@ -52,12 +53,12 @@ def createPickupGoal(group="arm_torso", target="part",
 	pug.target_name = target
 	pug.group_name = group
 	pug.possible_grasps.extend(possible_grasps)
-	pug.allowed_planning_time = 10.0
+	pug.allowed_planning_time = 20.0
 	pug.planning_options.planning_scene_diff.is_diff = True
 	pug.planning_options.planning_scene_diff.robot_state.is_diff = True
 	pug.planning_options.plan_only = False
 	pug.planning_options.replan = True
-	pug.planning_options.replan_attempts = 5  # 10
+	pug.planning_options.replan_attempts = 20  # 10
 	pug.allowed_touch_objects = []
 	pug.attached_object_touch_links = ['<octomap>']
 	pug.attached_object_touch_links.extend(links_to_allow_contact)
@@ -105,6 +106,8 @@ class PickAndPlaceServer(object):
 		self.scene_srv.wait_for_service()
 		rospy.loginfo("Connected.")
 
+		self.dyn_client = dynamic_reconfigure.client.Client('pick_and_place_server', timeout=30)
+
 		rospy.loginfo("Connecting to clear octomap service...")
 		self.clear_octomap_srv = rospy.ServiceProxy(
 			'/clear_octomap', Empty)
@@ -126,6 +129,8 @@ class PickAndPlaceServer(object):
 			'/place_pose', PickUpPoseAction,
 			execute_cb=self.place_cb, auto_start=False)
 		self.place_as.start()
+	
+
 
 	def pick_cb(self, goal):
 		"""
@@ -184,13 +189,23 @@ class PickAndPlaceServer(object):
 		
 		# Get the object dae path and size from a yaml.
 		# path = self.get_path(object_id)
-		path = roslib.packages.get_pkg_dir('tiago_sim_robocup2021')+'/models/ycb_004_sugar_box/meshes/textured.dae'
-		
+		self.obj_properties = rospy.get_param('/object_properties/' + object_id, None)
+		if self.obj_properties == None:
+			rospy.logerr("Error loading object properties for %s", object_id)
+			return	
+		path = roslib.packages.get_pkg_dir('tiago_sim_robocup2021')+self.obj_properties['dae']
+		params = {}
 		self.scene.add_mesh("part", object_pose, path)
+		for prop in self.obj_properties:
+			if prop != 'dae': 
+				params[prop] = self.obj_properties[prop]
+
+		rospy.loginfo("Updating SphericalGrasps params...")
+		self.dyn_client.update_configuration(params)
 		rospy.loginfo("Second%s", object_pose.pose)
 
 		grasp_pose = copy.deepcopy(object_pose)
-		grasp_pose.pose.position.z += 0.1
+		grasp_pose.pose.position.z += 0.03
 		rospy.loginfo("Grasp pose --- %s", grasp_pose.pose)
 		
 		possible_grasps = self.sg.create_grasps_from_object_pose(grasp_pose)

@@ -1,0 +1,19 @@
+object_properties:
+  trofast:
+    dae: /models/trofast/meshes/trofast.dae
+    min_degrees_yaw: 0
+    max_degrees_yaw: 360
+    min_degrees_pitch: 0
+    max_degrees_pitch: 360
+  sugar_box:
+    dae: /models/ycb_004_sugar_box/meshes/textured.dae
+    min_degrees_yaw: 5
+    max_degrees_yaw: 15
+    min_degrees_pitch: 0
+    max_degrees_pitch: 360
+  lemon:
+    dae: /models/ycb_014_lemon/meshes/textured.dae
+    min_degrees_yaw: 0
+    max_degrees_yaw: 360
+    min_degrees_pitch: 0
+    max_degrees_pitch: 360
