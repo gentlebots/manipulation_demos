@@ -1,0 +1,19 @@
+<!-- roslaunch gb_tiago_manipulation_demo generate_state_database.launch 
+  constraints_file:=/home/ubuntu/catkin_ws/src/manipulation_demos/gb_tiago_manipulation_demo/config/constraints.yaml 
+  planning_group:=arm_torso 
+  output_folder:=/home/ubuntu/catkin_ws/src/manipulation_demos/gb_tiago_manipulation_demo/config/constraint_db 
+-->
+<launch>
+  <arg name="use_current_scene" default="false"/>
+  <arg name="planning_group"/>
+  <arg name="constraints_file" doc="the path to a constraints yaml file (see generate_state_database for details)"/>
+  <arg name="output_folder" doc="output_folder"/>
+
+  <node name="generate_state_database" pkg="moveit_planners_ompl" type="generate_state_database" output="screen">
+    <param name="use_current_scene" value="$(arg use_current_scene)"/>
+    <param name="planning_group" value="$(arg planning_group)"/>
+    <param name="output_folder" value="$(arg output_folder)"/>
+    <rosparam ns="constraints" command="load" file="$(arg constraints_file)"/>
+  </node>
+
+</launch>

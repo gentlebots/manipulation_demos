@@ -27,7 +27,7 @@ from spherical_grasps_server import SphericalGrasps
 from actionlib import SimpleActionClient, SimpleActionServer
 from moveit_commander import PlanningSceneInterface
 from moveit_msgs.msg import Grasp, PickupAction, PickupGoal, PickupResult, MoveItErrorCodes
-from moveit_msgs.msg import PlaceAction, PlaceGoal, PlaceResult, PlaceLocation
+from moveit_msgs.msg import PlaceAction, PlaceGoal, PlaceResult, PlaceLocation, JointConstraint
 from geometry_msgs.msg import Pose, PoseStamped, PoseArray, Vector3Stamped, Vector3, Quaternion
 from gb_tiago_manipulation_demo.msg import PickUpPoseAction, PickUpPoseGoal, PickUpPoseResult, PickUpPoseFeedback
 from moveit_msgs.srv import GetPlanningScene, GetPlanningSceneRequest, GetPlanningSceneResponse
@@ -54,15 +54,23 @@ def createPickupGoal(group="arm_torso", target="part",
 	pug.group_name = group
 	pug.possible_grasps.extend(possible_grasps)
 	pug.allowed_planning_time = 20.0
+
+	#j = JointConstraint()
+	#j.joint_name = "arm_7_joint"
+	#j.position = 1.0821
+	#j.tolerance_above = 0.1
+	#j.tolerance_below = 0.1
+	#j.weight = 1.0
+	#pug.path_constraints.joint_constraints = [j]
+
 	pug.planning_options.planning_scene_diff.is_diff = True
 	pug.planning_options.planning_scene_diff.robot_state.is_diff = True
 	pug.planning_options.plan_only = False
 	pug.planning_options.replan = True
-	pug.planning_options.replan_attempts = 20  # 10
+	pug.planning_options.replan_attempts = 10  # 10
 	pug.allowed_touch_objects = []
 	pug.attached_object_touch_links = ['<octomap>']
 	pug.attached_object_touch_links.extend(links_to_allow_contact)
-	
 	return pug
 
 
@@ -81,7 +89,7 @@ def createPlaceGoal(place_pose,
 	placeg.planning_options.planning_scene_diff.robot_state.is_diff = True
 	placeg.planning_options.plan_only = False
 	placeg.planning_options.replan = True
-	placeg.planning_options.replan_attempts = 5
+	placeg.planning_options.replan_attempts = 20
 	placeg.allowed_touch_objects = ['<octomap>']
 	placeg.allowed_touch_objects.extend(links_to_allow_contact)
 
@@ -193,7 +201,7 @@ class PickAndPlaceServer(object):
 		if self.obj_properties == None:
 			rospy.logerr("Error loading object properties for %s", object_id)
 			return	
-		path = roslib.packages.get_pkg_dir('tiago_sim_robocup2021')+self.obj_properties['dae']
+		path = roslib.packages.get_pkg_dir('tmc_wrs_gazebo_worlds')+self.obj_properties['dae']
 		params = {}
 		self.scene.add_mesh("part", object_pose, path)
 		for prop in self.obj_properties:
@@ -205,7 +213,7 @@ class PickAndPlaceServer(object):
 		rospy.loginfo("Second%s", object_pose.pose)
 
 		grasp_pose = copy.deepcopy(object_pose)
-		grasp_pose.pose.position.z += 0.03
+		grasp_pose.pose.position.z += 0.04
 		rospy.loginfo("Grasp pose --- %s", grasp_pose.pose)
 		
 		possible_grasps = self.sg.create_grasps_from_object_pose(grasp_pose)

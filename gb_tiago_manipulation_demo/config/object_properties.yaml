@@ -7,13 +7,13 @@ object_properties:
     max_degrees_pitch: 360
   sugar_box:
     dae: /models/ycb_004_sugar_box/meshes/textured.dae
-    min_degrees_yaw: 5
+    min_degrees_yaw: 0
     max_degrees_yaw: 15
-    min_degrees_pitch: 0
-    max_degrees_pitch: 360
+    min_degrees_pitch: 100
+    max_degrees_pitch: 180
   lemon:
     dae: /models/ycb_014_lemon/meshes/textured.dae
     min_degrees_yaw: 0
-    max_degrees_yaw: 360
+    max_degrees_yaw: 30
     min_degrees_pitch: 0
     max_degrees_pitch: 360

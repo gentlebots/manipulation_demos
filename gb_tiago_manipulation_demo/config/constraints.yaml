@@ -1,0 +1,7 @@
+name: end_effector_fixed_orientation
+constraints:
+- type: joint
+  joint_name: arm_7_joint
+  position: 1.0821
+  tolerance: 0.1
+  weight: 100.0

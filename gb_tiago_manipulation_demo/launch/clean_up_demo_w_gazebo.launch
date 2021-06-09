@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
+  <arg name="world_name" default="$(find tiago_sim_robocup2021)/worlds/wrs2020_clean_up_demo.world" />
+
+  <!-- Load Gazebo -->
+  <include file="$(find tiago_sim_robocup2021)/launch/robocup2021_gazebo.launch" >
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="clean_up" value="true"/>
+  </include>
+  <!-- Spawn TIAGo -->
+  <include file="$(find tiago_sim_robocup2021)/launch/tiago_spawn.launch" >
+    <arg name="ft_sensor"           value="schunk-ft"/>
+  </include>
+
+
   <!-- TIAGo controllers -->
   <include file="$(find tiago_sim_robocup2021)/launch/tiago_sim_controllers.launch" >
     <arg name="ft_sensor"           value="schunk-ft"/>
@@ -8,7 +21,7 @@
   
   <!-- Allowed joint-value tolerance for validation that trajectory's first point matches current robot state -->
   <param name="/move_group/trajectory_execution/allowed_start_tolerance" value="0.0"/>
-  <param name="/move_group/octomap_resolution" value="0.025"/>
+  <param name="/move_group/octomap_resolution" value="0.05"/>
   <!--<param name="/move_group/constraint_approximations_path" value="$(find gb_tiago_manipulation_demo)/config/constraint_db/"/>-->
   
   <arg name="rviz"  default="true"/>
@@ -23,12 +36,12 @@
   </node>
 
   <!-- Node exposing service to start looking for the object and trigger the picking -->
-  <node name="pick_client" pkg="gb_tiago_manipulation_demo" type="pick_client_mesh.py" output="screen"/>  
+  <!--<node name="pick_client" pkg="gb_tiago_manipulation_demo" type="pick_client_mesh.py" output="screen"/>-->
 
   <group if="$(arg rviz)">
       <node name="pick_demo_rviz" pkg="rviz" type="rviz" args="-d $(find gb_tiago_manipulation_demo)/config/rviz/tiago_pick_demo.rviz" />
   </group>
 
-  <node pkg="topic_tools" type="throttle" name="throttle_node" args="messages /xtion/depth_registered/points 4 /throttle_filtering_points/filtered_points" />
+  <node pkg="topic_tools" type="throttle" name="throttle_node" args="messages /xtion/depth_registered/points 5 /throttle_filtering_points/filtered_points" />
 
 </launch>
