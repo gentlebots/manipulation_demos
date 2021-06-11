@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
   <!-- TIAGo controllers -->
-  <include file="$(find tiago_sim_robocup2021)/launch/tiago_sim_controllers.launch" >
+  <!--<include file="$(find tiago_sim_robocup2021)/launch/tiago_sim_controllers.launch" >
     <arg name="ft_sensor"           value="schunk-ft"/>
     <arg name="use_moveit_camera"   value="true"/>
-  </include>
+  </include>-->
   
   <!-- Allowed joint-value tolerance for validation that trajectory's first point matches current robot state -->
   <param name="/move_group/trajectory_execution/allowed_start_tolerance" value="0.0"/>
   <param name="/move_group/octomap_resolution" value="0.025"/>
   <!--<param name="/move_group/constraint_approximations_path" value="$(find gb_tiago_manipulation_demo)/config/constraint_db/"/>-->
   
-  <arg name="rviz"  default="true"/>
+  <arg name="rviz"  default="false"/>
   
   <!-- Load definition of pregrasp motion into play_motion namespace -->
   <rosparam command="load" file="$(find gb_tiago_manipulation_demo)/config/pick_motions.yaml" /> 
