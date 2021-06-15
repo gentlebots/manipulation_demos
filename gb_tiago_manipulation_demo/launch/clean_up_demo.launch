@@ -28,7 +28,8 @@
   <group if="$(arg rviz)">
       <node name="pick_demo_rviz" pkg="rviz" type="rviz" args="-d $(find gb_tiago_manipulation_demo)/config/rviz/tiago_pick_demo.rviz" />
   </group>
-
+  <node name="tuck_arm" pkg="tiago_gazebo" type="tuck_arm.py" output="screen"/>
+  <node name="image_proc" pkg="image_proc" type="image_proc" ns="xtion/rgb"/>
   <node pkg="topic_tools" type="throttle" name="throttle_node" args="messages /xtion/depth_registered/points 4 /throttle_filtering_points/filtered_points" />
 
 </launch>
