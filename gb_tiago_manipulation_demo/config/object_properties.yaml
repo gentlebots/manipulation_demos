@@ -6,10 +6,11 @@ object_properties:
     min_degrees_pitch: 0
     max_degrees_pitch: 360
   sugar_box:
+    grasp_desired_distance: 0.33
     dae: /models/ycb_004_sugar_box/meshes/textured.dae
     min_degrees_yaw: 0
     max_degrees_yaw: 15
-    min_degrees_pitch: 100
+    min_degrees_pitch: 0
     max_degrees_pitch: 180
   lemon:
     dae: /models/ycb_014_lemon/meshes/textured.dae
@@ -17,3 +18,40 @@ object_properties:
     max_degrees_yaw: 30
     min_degrees_pitch: 0
     max_degrees_pitch: 360
+  banana:
+    grasp_desired_distance: 0.2
+    dae: /models/ycb_011_banana/meshes/textured.dae
+    min_degrees_yaw: 0
+    max_degrees_yaw: 15
+    min_degrees_pitch: 0
+    max_degrees_pitch: 180
+  peaches:
+    grasp_desired_distance: 0.2
+    dae: /models/ycb_015_peach/meshes/textured.dae
+    min_degrees_yaw: 0
+    max_degrees_yaw: 360
+    min_degrees_pitch: 0
+    max_degrees_pitch: 360
+  bleach:
+    grasp_desired_distance: 0.45
+    dae: /models/ycb_021_bleach_cleanser/meshes/textured.dae
+    min_degrees_yaw: 0
+    max_degrees_yaw: 360
+    min_degrees_pitch: 0
+    max_degrees_pitch: 360
+  soup:
+    grasp_desired_distance: 0.33
+    dae: /models/ycb_005_tomato_soup_can/meshes/textured.dae
+    min_degrees_yaw: 0
+    max_degrees_yaw: 360
+    min_degrees_pitch: 0
+    max_degrees_pitch: 360
+  gelatin:
+    grasp_desired_distance: 0.25
+    dae: /models/ycb_009_gelatin_box/meshes/textured.dae
+    min_degrees_yaw: 0
+    max_degrees_yaw: 15
+    min_degrees_pitch: 0
+    max_degrees_pitch: 180
+
+    

@@ -29,7 +29,7 @@ post_grasp_direction_x: -1.0
 post_grasp_direction_y: 0.0
 post_grasp_direction_z: 0.0
 
-max_contact_force: 100.0
+max_contact_force: 0.0
 allowed_touch_objects: ''
 
 # Rotation to apply if you have unaligned
@@ -47,7 +47,7 @@ min_degrees_pitch: 0
 max_degrees_pitch: 360
 
 # The steps are the main thing to tune
-step_degrees_pitch: 5
+step_degrees_pitch: 10
 step_degrees_yaw: 10
 
 links_to_allow_contact: ["gripper_link","gripper_left_finger_link", "gripper_right_finger_link"]

@@ -120,7 +120,7 @@ class PickAndPlaceServer(object):
 		self.clear_octomap_srv = rospy.ServiceProxy(
 			'/clear_octomap', Empty)
 		self.clear_octomap_srv.wait_for_service()
-		rospy.loginfo("Connected!")  
+		rospy.loginfo("Connected!")
 		# Get the links of the end effector exclude from collisions
 		self.links_to_allow_contact = rospy.get_param('~links_to_allow_contact', None)
 		if self.links_to_allow_contact is None:
@@ -137,8 +137,6 @@ class PickAndPlaceServer(object):
 			'/place_pose', PickUpPoseAction,
 			execute_cb=self.place_cb, auto_start=False)
 		self.place_as.start()
-	
-
 
 	def pick_cb(self, goal):
 		"""
@@ -188,19 +186,17 @@ class PickAndPlaceServer(object):
 		rospy.loginfo("Removing any previous 'part' object")
 		self.scene.remove_attached_object("arm_tool_link")
 		self.scene.remove_world_object("part")
-		rospy.loginfo("Clearing octomap")
+		rospy.loginfo("Clearing octomap. Calling srv...")
 		self.clear_octomap_srv.call(EmptyRequest())
 		rospy.sleep(0.5)  # Removing is fast
-
 		rospy.loginfo("Adding new 'part' object")
-		rospy.loginfo("Object pose: %s", object_pose.pose)
+		rospy.loginfo("Object %s: %s", object_id, object_pose)
 		
 		# Get the object dae path and size from a yaml.
-		# path = self.get_path(object_id)
 		self.obj_properties = rospy.get_param('/object_properties/' + object_id, None)
 		if self.obj_properties == None:
 			rospy.logerr("Error loading object properties for %s", object_id)
-			return	
+			return 99999
 		path = roslib.packages.get_pkg_dir('tmc_wrs_gazebo_worlds')+self.obj_properties['dae']
 		params = {}
 		self.scene.add_mesh("part", object_pose, path)
@@ -210,18 +206,16 @@ class PickAndPlaceServer(object):
 
 		rospy.loginfo("Updating SphericalGrasps params...")
 		self.dyn_client.update_configuration(params)
-		rospy.loginfo("Second%s", object_pose.pose)
-
+		
 		grasp_pose = copy.deepcopy(object_pose)
 		grasp_pose.pose.position.z += 0.04
+
 		rospy.loginfo("Grasp pose --- %s", grasp_pose.pose)
-		
 		possible_grasps = self.sg.create_grasps_from_object_pose(grasp_pose)
 		self.pickup_ac
 		goal = createPickupGoal(
 			"arm_torso", "part", grasp_pose, possible_grasps, self.links_to_allow_contact)
-		
-                rospy.loginfo("Sending goal")
+		rospy.loginfo("Sending goal")
 		self.pickup_ac.send_goal(goal)
 		rospy.loginfo("Waiting for result")
 		self.pickup_ac.wait_for_result()
@@ -230,7 +224,6 @@ class PickAndPlaceServer(object):
 		rospy.loginfo(
 			"Pick result: " +
 		str(moveit_error_dict[result.error_code.val]))
-
 		return result.error_code.val
 
 	def place_object(self, object_pose):

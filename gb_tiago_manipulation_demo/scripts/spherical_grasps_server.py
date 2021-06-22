@@ -167,8 +167,6 @@ class SphericalGrasps(object):
 
         self._step_degrees_yaw = config["step_degrees_yaw"]
         self._step_degrees_pitch = config["step_degrees_pitch"]
-        print ("+_+++++++++++++++++++++++++++++")
-        print ("PARAM CHANGE")
         self._min_degrees_yaw = config["min_degrees_yaw"]
         self._max_degrees_yaw = config["max_degrees_yaw"]
         self._min_degrees_pitch = config["min_degrees_pitch"]

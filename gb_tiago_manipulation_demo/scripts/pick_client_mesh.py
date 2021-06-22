@@ -163,26 +163,30 @@ class PickObject(object):
 			rospy.loginfo("object pose in base_footprint:" + str(pick_g))
 			
 			self.detected_pose_pub.publish(pick_g.object_pose)
-			rospy.loginfo("Gonna pick:" + str(pick_g))
-			self.pick_as.send_goal_and_wait(pick_g)
-			rospy.loginfo("Done!")
+			rospy.logerr("Gonna pick:" + str(pick_g))
+			self.pick_as.send_goal_and_wait(pick_g, execute_timeout=rospy.Duration(30))
+			rospy.logerr("Done!")
 
 			result = self.pick_as.get_result()
 			# Move torso to its maximum height
-			self.lift_torso()
+			#self.lift_torso()
 			# Raise arm
 
 			rospy.loginfo("Moving arm to a safe pose")
 			self.arm_to_home()
 			rospy.loginfo("Raise object done.")
 			
-			if str(moveit_error_dict[result.error_code]) != "SUCCESS" or not self.gripper_loaded():
+			if str(moveit_error_dict[result.error_code]) != "SUCCESS":
 				result.error_code = 99999
 				rospy.logerr("Failed to pick or object lost. Notifying to client...")
 
 			result_msg = MoveItErrorCodes()
 			result_msg.val = result.error_code
 			self.result_pub.publish(result_msg)
+
+			if str(moveit_error_dict[result.error_code]) != "SUCCESS":
+				rospy.logerr("Forcing another attempt...")
+				self.pick(object_id, object_pose)
 
 	def place(self, place_id, pose):
 		self.lift_torso()
@@ -231,12 +235,12 @@ class PickObject(object):
 			self.result_pub.publish(result_msg)
 	
 	def arm_to_home(self):
-		#pmg = PlayMotionGoal()
-		#pmg.motion_name = 'home'
-		#pmg.skip_planning = False
+		pmg = PlayMotionGoal()
+		pmg.motion_name = 'home'
+		pmg.skip_planning = False
 		
 		#self.play_m_as.send_goal_and_wait(pmg)
-		self.go_to_pose_goal()
+		#self.go_to_pose_goal()
 	
 	def lift_torso(self):
 		rospy.loginfo("Moving torso up")
@@ -265,7 +269,7 @@ class PickObject(object):
 		#pmg.motion_name = 'pregrasp'
 		#pmg.skip_planning = False
 		#self.play_m_as.send_goal_and_wait(pmg)
-		rospy.loginfo("Done.")
+		#rospy.loginfo("Done.")
 		self.lower_head()
 		rospy.loginfo("Robot prepared.")
 	
@@ -291,20 +295,20 @@ class PickObject(object):
 		self.group.set_pose_target(pose_goal)
 
 
-		constraint = Constraints()
-		ocm = OrientationConstraint()
-		ocm.link_name = "gripper_tool_link"
-		ocm.header.frame_id = "base_link"
-		ocm.orientation.x = 0.707
-		ocm.orientation.y = 0.0
-		ocm.orientation.z = 0.0
-		ocm.orientation.w = -0.707
-		ocm.absolute_x_axis_tolerance = 0.7
-		ocm.absolute_y_axis_tolerance = 0.7
-		ocm.absolute_z_axis_tolerance = 0.7
-		ocm.weight = 1.0
-		constraint.orientation_constraints.append(ocm)
-		self.group.set_path_constraints(constraint)
+		#constraint = Constraints()
+		#ocm = OrientationConstraint()
+		#ocm.link_name = "gripper_tool_link"
+		#ocm.header.frame_id = "base_link"
+		#ocm.orientation.x = 0.707
+		#ocm.orientation.y = 0.0
+		#ocm.orientation.z = 0.0
+		#ocm.orientation.w = -0.707
+		#ocm.absolute_x_axis_tolerance = 0.7
+		#ocm.absolute_y_axis_tolerance = 0.7
+		#ocm.absolute_z_axis_tolerance = 0.7
+		#ocm.weight = 1.0
+		#constraint.orientation_constraints.append(ocm)
+		#self.group.set_path_constraints(constraint)
 		self.group.allow_replanning(True)
 		self.group.set_planning_time(15.0)
 		self.group.set_num_planning_attempts(10)
@@ -324,5 +328,5 @@ if __name__ == '__main__':
 	rate = rospy.Rate(10)
 	while not rospy.is_shutdown():
 		sphere.step()
-		sphere.pick_type.go_to_pose_goal()
+		#sphere.pick_type.go_to_pose_goal()
 		rate.sleep()
